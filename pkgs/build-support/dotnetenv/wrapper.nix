@@ -6,7 +6,7 @@
 , slnFile
 , targets ? "ReBuild"
 , verbosity ? "detailed"
-, options ? "/p:Configuration=Debug;Platform=Win32"
+, options ? ""
 , assemblyInputs ? []
 , preBuild ? ""
 , namespace
@@ -30,16 +30,16 @@ dotnetenv.buildSolution {
   preBuild = ''
     addRuntimeDeps()
     {
-	if [ -f $1/nix-support/dotnet-assemblies ]
-	then
-	    for i in $(cat $1/nix-support/dotnet-assemblies)
-	    do
-		windowsPath=$(cygpath --windows $i | sed 's|\\|\\\\|g')
-		assemblySearchArray="$assemblySearchArray @\"$windowsPath\""
-		
-		addRuntimeDeps $i
-	    done
-	fi
+        if [ -f $1/nix-support/dotnet-assemblies ]
+        then
+            for i in $(cat $1/nix-support/dotnet-assemblies)
+            do
+                windowsPath=$(cygpath --windows $i | sed 's|\\|\\\\|g')
+                assemblySearchArray="$assemblySearchArray @\"$windowsPath\""
+                
+                addRuntimeDeps $i
+            done
+        fi
     }
     
     export exePath=$(cygpath --windows $(find ${application} -name \*.exe) | sed 's|\\|\\\\|g')
@@ -48,7 +48,7 @@ dotnetenv.buildSolution {
     for path in ${toString assemblyInputs}
     do
         assemblySearchArray="$assemblySearchArray @\"$(cygpath --windows $path | sed 's|\\|\\\\|g')\", "
-	addRuntimeDeps $path
+        addRuntimeDeps $path
     done
     
     sed -e "s|@ROOTNAMESPACE@|${namespace}Wrapper|" \
@@ -57,8 +57,8 @@ dotnetenv.buildSolution {
     
     sed -e "s|@NAMESPACE@|${namespace}|g" \
         -e "s|@MAINCLASSNAME@|${mainClassName}|g" \
-	-e "s|@EXEPATH@|$exePath|g" \
-	-e "s|@ASSEMBLYSEARCHPATH@|$assemblySearchArray|" \
+        -e "s|@EXEPATH@|$exePath|g" \
+        -e "s|@ASSEMBLYSEARCHPATH@|$assemblySearchArray|" \
         Wrapper/Wrapper.cs.in > Wrapper/Wrapper.cs
   '';
 }

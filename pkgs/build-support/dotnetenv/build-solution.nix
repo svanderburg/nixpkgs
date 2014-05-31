@@ -5,22 +5,27 @@
 , slnFile
 , targets ? "ReBuild"
 , verbosity ? "detailed"
-, options ? "/p:Configuration=Debug;Platform=Win32"
+, options ? ""
 , assemblyInputs ? []
 , preBuild ? ""
 , modifyPublicMain ? false
 , mainClassFile ? null
+, preInstall ? ""
+, postInstall ? ""
 }:
 
 assert modifyPublicMain -> mainClassFile != null;
 
 let
-  wrapperCS = ./Wrapper.cs.in;  
+  wrapperCS = ./Wrapper.cs.in;
 in
 stdenv.mkDerivation {
   inherit name src;
   
-  buildInputs = [ dotnetfx ];  
+  buildInputs = [ dotnetfx ];
+  
+  # The system drive must be set so that Visual C++ builds don't fail with an error message saying that a path is not well formed
+  SYSTEMDRIVE = "C:";
 
   preConfigure = ''
     cd ${baseDir}
@@ -30,49 +35,54 @@ stdenv.mkDerivation {
     ${stdenv.lib.optionalString modifyPublicMain ''
       sed -i -e "s|static void Main|public static void Main|" ${mainClassFile}
     ''}
+    
     ${preBuild}
   '';
   
   installPhase = ''
-    addDeps()
+    ${preInstall}
+    
+    addAssemblyDeps()
     {
-	if [ -f $1/nix-support/dotnet-assemblies ]
-	then
-	    for i in $(cat $1/nix-support/dotnet-assemblies)
-	    do
-		windowsPath=$(cygpath --windows $i)
-		assemblySearchPaths="$assemblySearchPaths;$windowsPath"
-		
-		addDeps $i
-	    done
-	fi
+        if [ -f $1/nix-support/dotnet-assemblies ]
+        then
+            for i in $(cat $1/nix-support/dotnet-assemblies)
+            do
+                windowsPath=$(cygpath --windows $i)
+                assemblySearchPaths="$assemblySearchPaths;$windowsPath"
+                
+                addAssemblyDeps $i
+            done
+        fi
     }
     
     for i in ${toString assemblyInputs}
     do
-	windowsPath=$(cygpath --windows $i) 
-	echo "Using assembly path: $windowsPath"
-	
-	if [ "$assemblySearchPaths" = "" ]
-	then
-	    assemblySearchPaths="$windowsPath"
-	else
-	    assemblySearchPaths="$assemblySearchPaths;$windowsPath"
-	fi
-	
-	addDeps $i
+        windowsPath=$(cygpath --windows $i) 
+        echo "Using assembly path: $windowsPath"
+        
+        if [ "$assemblySearchPaths" = "" ]
+        then
+            assemblySearchPaths="$windowsPath"
+        else
+            assemblySearchPaths="$assemblySearchPaths;$windowsPath"
+        fi
+        
+        addAssemblyDeps $i
     done
       
     echo "Assembly search paths are: $assemblySearchPaths"
     
     if [ "$assemblySearchPaths" != "" ]
     then
-	echo "Using assembly search paths args: $assemblySearchPathsArg"
-	export AssemblySearchPaths=$assemblySearchPaths
+        echo "Using assembly search paths args: $assemblySearchPathsArg"
+        export AssemblySearchPaths=$assemblySearchPaths
     fi
     
     mkdir -p $out
-    MSBuild.exe ${toString slnFile} /nologo /t:${targets} /p:IntermediateOutputPath=$(cygpath --windows $out)\\ /p:OutputPath=$(cygpath --windows $out)\\ /verbosity:${verbosity} ${options}
+    export AdditionalIncludeDirectories="$AssemblySearchPaths"
+    
+    MSBuild.exe /nologo /t:${targets} /p:IntermediateOutputPath=$(cygpath --windows $out)'\' /p:OutDir=$(cygpath --windows $out)'\' /p:OutputPath=$(cygpath --windows $out)'\' /verbosity:${verbosity} ${options} $msBuildOpts ${toString slnFile} 
     
     # Because .NET assemblies store strings as UTF-16 internally, we cannot detect
     # hashes. Therefore a text files containing the proper paths is created
@@ -84,5 +94,7 @@ stdenv.mkDerivation {
     do
         echo $i >> $out/nix-support/dotnet-assemblies
     done
+    
+    ${postInstall}
   '';
 }
