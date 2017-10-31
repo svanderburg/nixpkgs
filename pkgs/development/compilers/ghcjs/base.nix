@@ -40,10 +40,7 @@
 , coreutils
 , libiconv
 
-, ghcjsNodePkgs ? callPackage ../../../top-level/node-packages.nix {
-    generated = ./node-packages-generated.nix;
-    self = ghcjsNodePkgs;
-  }
+, ghcjsNodePkgs ? callPackage ../node-modules/default-v6.nix {}
 
 , version ? "0.2.0"
 , ghcjsSrc ? fetchFromGitHub {
