@@ -528,7 +528,7 @@ with pkgs;
   ansifilter = callPackage ../tools/text/ansifilter {};
 
   apktool = callPackage ../development/tools/apktool {
-    buildTools = androidenv.buildTools;
+    inherit (androidenv.androidPkgs_9_0) build-tools;
   };
 
   appimage-run = callPackage ../tools/package-management/appimage-run {};
@@ -799,7 +799,7 @@ with pkgs;
   abootimg = callPackage ../development/mobile/abootimg {};
 
   adbfs-rootless = callPackage ../development/mobile/adbfs-rootless {
-    adb = androidenv.platformTools;
+    adb = androidenv.androidPkgs_9_0.platform-tools;
   };
 
   adb-sync = callPackage ../development/mobile/adb-sync { };
@@ -809,15 +809,11 @@ with pkgs;
     #licenseAccepted = (config.android_sdk.accept_license or false);
   };
 
-  inherit (androidenv) androidndk;
-
   androidndkPkgs = androidndkPkgs_17c;
   androidndkPkgs_17c = (callPackage ../development/androidndk-pkgs {})."17c";
   androidndkPkgs_10e = (callPackage ../development/androidndk-pkgs {})."10e";
 
-  androidsdk = androidenv.androidsdk_8_0;
-
-  androidsdk_extras = self.androidenv.androidsdk_8_0_extras;
+  androidsdk_9_0 = androidenv.androidPkgs_9_0.androidsdk;
 
   webos = recurseIntoAttrs {
     cmake-modules = callPackage ../development/mobile/webos/cmake-modules.nix { };
@@ -2656,7 +2652,7 @@ with pkgs;
   flamerobin = callPackage ../applications/misc/flamerobin { };
 
   flashtool = pkgsi686Linux.callPackage ../development/mobile/flashtool {
-    platformTools = androidenv.platformTools;
+    inherit (androidenv.androidPkgs_9_0) platform-tools;
   };
 
   flashrom = callPackage ../tools/misc/flashrom { };
@@ -5298,7 +5294,7 @@ with pkgs;
   };
 
   scrcpy = callPackage ../misc/scrcpy {
-    inherit (androidenv) platformTools;
+    inherit (androidenv.androidPkgs_9_0) platform-tools;
   };
 
   screen-message = callPackage ../tools/X11/screen-message { };
