@@ -809,6 +809,10 @@ with pkgs;
 
   inherit (androidenv) androidndk;
 
+  androidndkPkgs = androidndkPkgs_17c;
+  androidndkPkgs_17c = (callPackage ../development/androidndk-pkgs {})."17c";
+  androidndkPkgs_10e = (callPackage ../development/androidndk-pkgs {})."10e";
+
   androidsdk = androidenv.androidsdk_8_0;
 
   androidsdk_extras = self.androidenv.androidsdk_8_0_extras;
