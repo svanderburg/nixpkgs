@@ -810,8 +810,7 @@ with pkgs;
   };
 
   androidndkPkgs = androidndkPkgs_17c;
-  androidndkPkgs_17c = (callPackage ../development/androidndk-pkgs {})."17c";
-  androidndkPkgs_10e = (callPackage ../development/androidndk-pkgs {})."10e";
+  androidndkPkgs_18b = (callPackage ../development/androidndk-pkgs {})."18b";
 
   androidsdk_9_0 = androidenv.androidPkgs_9_0.androidsdk;
 
